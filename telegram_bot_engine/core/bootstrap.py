@@ -29,6 +29,7 @@ from ..engines.generators import (
     ProjectPlanningEngine,
     BlueprintValidatorEngine,
     StructureGenerationEngine,
+    ComponentDetectionEngine,
 )
 from ..logging import EngineLogger
 from ..manager import CoreEngineManager
@@ -102,6 +103,13 @@ def bootstrap(
     structure_generator = StructureGenerationEngine()
     registry.register_engine(structure_generator)
 
+    # -- component detection engine (Specification 007) ------------------
+    # The component detector scans the blueprint and structure map to
+    # detect every software component before code generation begins.
+    # It does not write code — it only produces a Component Registry.
+    component_detector = ComponentDetectionEngine()
+    registry.register_engine(component_detector)
+
     # -- validators --------------------------------------------------------
     registry.register_validator(BlueprintValidator())
     registry.register_validator(StructureValidator())
@@ -125,6 +133,8 @@ def bootstrap(
                      priority=50, dependencies=["project_planner"])
     manager.register(structure_generator, engine_id="structure_generator",
                      priority=60, dependencies=["blueprint_validator"])
+    manager.register(component_detector, engine_id="component_detector",
+                     priority=70, dependencies=["structure_generator"])
 
     # -- output & pipeline -------------------------------------------------
     output_manager = OutputManager(config=config)

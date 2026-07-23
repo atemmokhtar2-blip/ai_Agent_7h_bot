@@ -286,6 +286,53 @@ def build_default_schema() -> ConfigSchema:
         ],
     )
 
+    component_detector_section = SectionSchema(
+        name="component_detector",
+        description=(
+            "Controls the Component Detection Engine (Specification 007). "
+            "These settings determine how the component registry is "
+            "built — whether the engine proceeds even when the blueprint "
+            "has warnings, and whether error-level findings cause the "
+            "engine to fail."
+        ),
+        fields=[
+            FieldSchema(
+                name="proceed_on_warning",
+                type=bool,
+                default=True,
+                description=(
+                    "When True the component detector proceeds even if "
+                    "the blueprint validation has warnings (not errors). "
+                    "When False, only APPROVED blueprints proceed."
+                ),
+            ),
+            FieldSchema(
+                name="fail_on_errors",
+                type=bool,
+                default=True,
+                description=(
+                    "When True the engine returns a failed StageResult "
+                    "when any error-level findings are detected "
+                    "(e.g. circular dependencies, self-dependencies, "
+                    "incompatible components).  When False, the engine "
+                    "records the findings but returns a successful "
+                    "result."
+                ),
+            ),
+            FieldSchema(
+                name="detect_repositories",
+                type=bool,
+                default=True,
+                description=(
+                    "When True the engine detects repository and "
+                    "database-model components for features that "
+                    "require a database.  When False, these "
+                    "components are not detected automatically."
+                ),
+            ),
+        ],
+    )
+
     return ConfigSchema(
         sections=[
             logging_section,
@@ -295,6 +342,7 @@ def build_default_schema() -> ConfigSchema:
             engine_section,
             blueprint_validator_section,
             structure_generator_section,
+            component_detector_section,
         ],
     )
 
