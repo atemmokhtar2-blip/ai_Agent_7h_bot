@@ -10,10 +10,12 @@ from .intent_parser_engine import IntentParserEngine
 from .blueprint_composer_engine import BlueprintComposerEngine
 from .analyzer import AnalyzerEngine
 from .project_planner import ProjectPlanningEngine
+from .blueprint_validator import BlueprintValidatorEngine
 
 __all__ = [
     "IntentParserEngine",
     "BlueprintComposerEngine",
     "AnalyzerEngine",
     "ProjectPlanningEngine",
+    "BlueprintValidatorEngine",
 ]

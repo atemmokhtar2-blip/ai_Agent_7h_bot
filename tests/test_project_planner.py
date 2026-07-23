@@ -1017,10 +1017,10 @@ def test_bootstrap_integration():
     # Registry has project_planner.
     engine_names = [e.name for e in registry.engines()]
     t.check("BI-01: registry has project_planner", "project_planner" in engine_names)
-    t.check("BI-02: registry has 4 engines", len(registry.engines()) == 4)
+    t.check("BI-02: registry has 5 engines", len(registry.engines()) == 5)
 
     # Manager has project_planner.
-    t.check("BI-03: manager count is 4", manager.count() == 4)
+    t.check("BI-03: manager count is 5", manager.count() == 5)
     states = manager.states()
     t.check("BI-04: manager has project_planner", "project_planner" in states)
     t.check("BI-05: project_planner state is registered",
@@ -1030,7 +1030,7 @@ def test_bootstrap_integration():
     queue = manager.queue_order()
     queue_ids = [q.engine_id for q in queue]
     t.check("BI-06: queue includes project_planner", "project_planner" in queue_ids)
-    t.check("BI-07: queue has 4 items", len(queue) == 4)
+    t.check("BI-07: queue has 5 items", len(queue) == 5)
 
     # Project planner has correct priority (40).
     planner_item = [q for q in queue if q.engine_id == "project_planner"][0]

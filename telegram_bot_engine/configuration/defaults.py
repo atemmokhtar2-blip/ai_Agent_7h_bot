@@ -180,6 +180,67 @@ def build_default_schema() -> ConfigSchema:
         ],
     )
 
+    blueprint_validator_section = SectionSchema(
+        name="blueprint_validator",
+        description=(
+            "Controls the Blueprint Validator Engine (Specification 005). "
+            "These settings determine the quality thresholds and weights "
+            "used to decide whether a blueprint is approved or rejected."
+        ),
+        fields=[
+            FieldSchema(
+                name="minimum_required_score",
+                type=float,
+                default=0.7,
+                description=(
+                    "The minimum overall quality score (0.0-1.0) "
+                    "required for a blueprint to be approved."
+                ),
+                validator=lambda v: 0.0 <= v <= 1.0,
+            ),
+            FieldSchema(
+                name="weight_structure_quality",
+                type=float,
+                default=0.25,
+                description=(
+                    "Weight of the structure-quality sub-score in the "
+                    "overall quality score."
+                ),
+                validator=lambda v: 0.0 <= v <= 1.0,
+            ),
+            FieldSchema(
+                name="weight_dependency_quality",
+                type=float,
+                default=0.30,
+                description=(
+                    "Weight of the dependency-quality sub-score in the "
+                    "overall quality score."
+                ),
+                validator=lambda v: 0.0 <= v <= 1.0,
+            ),
+            FieldSchema(
+                name="weight_feature_quality",
+                type=float,
+                default=0.20,
+                description=(
+                    "Weight of the feature-quality sub-score in the "
+                    "overall quality score."
+                ),
+                validator=lambda v: 0.0 <= v <= 1.0,
+            ),
+            FieldSchema(
+                name="weight_planning_quality",
+                type=float,
+                default=0.25,
+                description=(
+                    "Weight of the planning-quality sub-score in the "
+                    "overall quality score."
+                ),
+                validator=lambda v: 0.0 <= v <= 1.0,
+            ),
+        ],
+    )
+
     return ConfigSchema(
         sections=[
             logging_section,
@@ -187,6 +248,7 @@ def build_default_schema() -> ConfigSchema:
             output_section,
             registry_section,
             engine_section,
+            blueprint_validator_section,
         ],
     )
 

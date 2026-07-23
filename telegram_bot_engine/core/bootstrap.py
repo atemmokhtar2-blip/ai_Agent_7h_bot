@@ -27,6 +27,7 @@ from ..engines.generators import (
     BlueprintComposerEngine,
     IntentParserEngine,
     ProjectPlanningEngine,
+    BlueprintValidatorEngine,
 )
 from ..logging import EngineLogger
 from ..manager import CoreEngineManager
@@ -92,6 +93,10 @@ def bootstrap(
     registry.register_engine(blueprint_composer)
     registry.register_engine(project_planner)
 
+    # -- understanding engines (validator) -------------------------------
+    blueprint_validator = BlueprintValidatorEngine()
+    registry.register_engine(blueprint_validator)
+
     # -- validators --------------------------------------------------------
     registry.register_validator(BlueprintValidator())
     registry.register_validator(StructureValidator())
@@ -111,6 +116,8 @@ def bootstrap(
                      priority=30, dependencies=["analyzer", "intent_parser"])
     manager.register(project_planner, engine_id="project_planner",
                      priority=40, dependencies=["analyzer"])
+    manager.register(blueprint_validator, engine_id="blueprint_validator",
+                     priority=50, dependencies=["project_planner"])
 
     # -- output & pipeline -------------------------------------------------
     output_manager = OutputManager(config=config)
