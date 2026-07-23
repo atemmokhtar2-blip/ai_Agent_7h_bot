@@ -11,6 +11,7 @@ from .blueprint_composer_engine import BlueprintComposerEngine
 from .analyzer import AnalyzerEngine
 from .project_planner import ProjectPlanningEngine
 from .blueprint_validator import BlueprintValidatorEngine
+from .structure_generator import StructureGenerationEngine
 
 __all__ = [
     "IntentParserEngine",
@@ -18,4 +19,5 @@ __all__ = [
     "AnalyzerEngine",
     "ProjectPlanningEngine",
     "BlueprintValidatorEngine",
+    "StructureGenerationEngine",
 ]

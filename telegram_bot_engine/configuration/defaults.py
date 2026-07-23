@@ -241,6 +241,51 @@ def build_default_schema() -> ConfigSchema:
         ],
     )
 
+    structure_generator_section = SectionSchema(
+        name="structure_generator",
+        description=(
+            "Controls the Structure Generation Engine (Specification 006). "
+            "These settings determine how the project structure map is "
+            "built — the threshold for large projects and whether the "
+            "engine proceeds even when the blueprint has warnings."
+        ),
+        fields=[
+            FieldSchema(
+                name="large_project_threshold",
+                type=int,
+                default=8,
+                description=(
+                    "The number of components above which the project "
+                    "is considered 'large' and components are split "
+                    "into independent package folders."
+                ),
+                validator=lambda v: v >= 1,
+            ),
+            FieldSchema(
+                name="proceed_on_warning",
+                type=bool,
+                default=True,
+                description=(
+                    "When True the structure engine proceeds even if "
+                    "the blueprint validation has warnings (not errors). "
+                    "When False, only APPROVED blueprints proceed."
+                ),
+            ),
+            FieldSchema(
+                name="create_directories",
+                type=bool,
+                default=False,
+                description=(
+                    "When True the engine also physically creates the "
+                    "directories on disk using the DirectoryBuilder. "
+                    "When False (default), only the structure map is "
+                    "produced; physical creation is deferred to a "
+                    "later phase."
+                ),
+            ),
+        ],
+    )
+
     return ConfigSchema(
         sections=[
             logging_section,
@@ -249,6 +294,7 @@ def build_default_schema() -> ConfigSchema:
             registry_section,
             engine_section,
             blueprint_validator_section,
+            structure_generator_section,
         ],
     )
 

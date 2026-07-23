@@ -10,20 +10,21 @@
 - [x] Update generators/__init__.py (export engine)
 - [x] Update bootstrap.py (register engine)
 - [x] Update defaults.py (quality config section)
-- [ ] Write tests/test_blueprint_validator.py
-- [ ] Run all tests (manager + planner + validator)
+- [x] Write tests/test_blueprint_validator.py
+- [x] Run all tests (manager + planner + validator)
 
 ## Spec 006 — Project Structure Generation Engine
-- [ ] Read & understand Spec 006 requirements
-- [ ] Read existing builders (DirectoryBuilder, FileBuilder, etc.)
-- [ ] Create structure_map.py (data model: ProjectStructureMap, FolderEntry, FileEntry)
-- [ ] Create naming_engine.py (internal naming engine)
-- [ ] Create folder_planner.py (folder planning)
-- [ ] Create file_planner.py (file planning)
-- [ ] Create structure_validator.py (validation before finishing)
-- [ ] Create structure_generation_engine.py (main engine)
-- [ ] Create __init__.py (package)
-- [ ] Update generators/__init__.py (export)
-- [ ] Update bootstrap.py (register)
-- [ ] Write tests/test_structure_generator.py
-- [ ] Run all tests
+- [x] Read & understand Spec 006 requirements
+- [x] Read existing builders (DirectoryBuilder, FileBuilder, etc.)
+- [x] Create structure_map.py (data model: ProjectStructureMap, FolderEntry, FileEntry)
+- [x] Create naming_engine.py (internal naming engine)
+- [x] Create folder_planner.py (folder planning)
+- [x] Create file_planner.py (file planning)
+- [x] Create structure_validator.py (validation before finishing)
+- [x] Create structure_generation_engine.py (main engine)
+- [x] Create __init__.py (package)
+- [x] Update generators/__init__.py (export)
+- [x] Update bootstrap.py (register)
+- [x] Update defaults.py (structure_engine config)
+- [x] Write tests/test_structure_generator.py
+- [x] Run all tests
