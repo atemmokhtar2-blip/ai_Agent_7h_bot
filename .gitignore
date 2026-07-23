@@ -31,8 +31,7 @@ Thumbs.db
 htmlcov/
 .tox/
 
-# Output directories
-output/
+# Output directories (but not the telegram_bot_engine/output package)
 outputs/
 tmp/
 *.log
