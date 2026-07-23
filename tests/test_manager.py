@@ -394,7 +394,7 @@ check("bootstrap returns 3-tuple", len(boot) == 3, str(len(boot)))
 registry, orchestrator, manager = boot
 check("manager is CoreEngineManager",
       isinstance(manager, CoreEngineManager))
-check("manager has 6 engines", manager.count() == 6,
+check("manager has 9 engines", manager.count() == 9,
       str(manager.count()))
 states = manager.states()
 check("all engines Registered initially",

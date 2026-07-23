@@ -31,6 +31,7 @@ from ..engines.generators import (
     StructureGenerationEngine,
     ComponentDetectionEngine,
     FileGenerationPlanningEngine,
+    VisualPageReconstructionEngine,
 )
 from ..logging import EngineLogger
 from ..manager import CoreEngineManager
@@ -120,6 +121,13 @@ def bootstrap(
     file_planner = FileGenerationPlanningEngine()
     registry.register_engine(file_planner)
 
+    # -- visual page reconstruction engine (Specification 009) -----------
+    # The PDFX AI Visual Page Reconstruction Engine reads a PDF,
+    # analyses every element, and rebuilds it with pixel-accurate
+    # fidelity.  It does not write code or create project files.
+    visual_reconstructor = VisualPageReconstructionEngine()
+    registry.register_engine(visual_reconstructor)
+
     # -- validators --------------------------------------------------------
     registry.register_validator(BlueprintValidator())
     registry.register_validator(StructureValidator())
@@ -147,6 +155,9 @@ def bootstrap(
                      priority=70, dependencies=["structure_generator"])
     manager.register(file_planner, engine_id="file_planner",
                      priority=80, dependencies=["component_detector"])
+    manager.register(visual_reconstructor,
+                     engine_id="visual_page_reconstruction",
+                     priority=90, dependencies=["file_planner"])
 
     # -- output & pipeline -------------------------------------------------
     output_manager = OutputManager(config=config)
