@@ -13,6 +13,7 @@ from .project_planner import ProjectPlanningEngine
 from .blueprint_validator import BlueprintValidatorEngine
 from .structure_generator import StructureGenerationEngine
 from .component_detector import ComponentDetectionEngine
+from .file_planner import FileGenerationPlanningEngine
 
 __all__ = [
     "IntentParserEngine",
@@ -22,4 +23,5 @@ __all__ = [
     "BlueprintValidatorEngine",
     "StructureGenerationEngine",
     "ComponentDetectionEngine",
+    "FileGenerationPlanningEngine",
 ]

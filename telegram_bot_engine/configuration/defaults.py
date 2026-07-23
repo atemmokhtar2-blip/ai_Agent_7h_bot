@@ -333,6 +333,54 @@ def build_default_schema() -> ConfigSchema:
         ],
     )
 
+    file_planner_section = SectionSchema(
+        name="file_planner",
+        description=(
+            "Controls the File Generation Planning Engine "
+            "(Specification 008).  These settings determine how the "
+            "file generation plan is built — whether the engine "
+            "proceeds even when the blueprint has warnings, and "
+            "whether error-level findings cause the engine to fail."
+        ),
+        fields=[
+            FieldSchema(
+                name="proceed_on_warning",
+                type=bool,
+                default=True,
+                description=(
+                    "When True the file planner proceeds even if "
+                    "the blueprint validation has warnings (not "
+                    "errors).  When False, only APPROVED blueprints "
+                    "proceed."
+                ),
+            ),
+            FieldSchema(
+                name="fail_on_errors",
+                type=bool,
+                default=True,
+                description=(
+                    "When True the engine returns a failed "
+                    "StageResult when any error-level findings are "
+                    "detected (e.g. duplicate files, circular "
+                    "dependencies, files without purpose).  When "
+                    "False, the engine records the findings but "
+                    "returns a successful result."
+                ),
+            ),
+            FieldSchema(
+                name="require_all_components_have_files",
+                type=bool,
+                default=False,
+                description=(
+                    "When True the engine treats it as an error if "
+                    "any component in the registry has no planned "
+                    "files.  When False (default), missing files "
+                    "are recorded as warnings."
+                ),
+            ),
+        ],
+    )
+
     return ConfigSchema(
         sections=[
             logging_section,
@@ -343,6 +391,7 @@ def build_default_schema() -> ConfigSchema:
             blueprint_validator_section,
             structure_generator_section,
             component_detector_section,
+            file_planner_section,
         ],
     )
 

@@ -30,6 +30,7 @@ from ..engines.generators import (
     BlueprintValidatorEngine,
     StructureGenerationEngine,
     ComponentDetectionEngine,
+    FileGenerationPlanningEngine,
 )
 from ..logging import EngineLogger
 from ..manager import CoreEngineManager
@@ -110,6 +111,15 @@ def bootstrap(
     component_detector = ComponentDetectionEngine()
     registry.register_engine(component_detector)
 
+    # -- file generation planning engine (Specification 008) -------------
+    # The file planner plans every file the project will contain
+    # before any file is created on disk.  It reads the blueprint,
+    # validation report, structure map, and component registry, and
+    # produces a File Generation Plan.  It does not write code or
+    # create files.
+    file_planner = FileGenerationPlanningEngine()
+    registry.register_engine(file_planner)
+
     # -- validators --------------------------------------------------------
     registry.register_validator(BlueprintValidator())
     registry.register_validator(StructureValidator())
@@ -135,6 +145,8 @@ def bootstrap(
                      priority=60, dependencies=["blueprint_validator"])
     manager.register(component_detector, engine_id="component_detector",
                      priority=70, dependencies=["structure_generator"])
+    manager.register(file_planner, engine_id="file_planner",
+                     priority=80, dependencies=["component_detector"])
 
     # -- output & pipeline -------------------------------------------------
     output_manager = OutputManager(config=config)
