@@ -17,6 +17,7 @@ from .file_planner import FileGenerationPlanningEngine
 from .visual_page_reconstruction import VisualPageReconstructionEngine
 from .dependency_resolver import DependencyResolutionEngine
 from .project_context import ProjectContextEngine
+from .intelligence_graph import IntelligenceGraphEngine
 
 __all__ = [
     "IntentParserEngine",
@@ -30,4 +31,5 @@ __all__ = [
     "VisualPageReconstructionEngine",
     "DependencyResolutionEngine",
     "ProjectContextEngine",
+    "IntelligenceGraphEngine",
 ]

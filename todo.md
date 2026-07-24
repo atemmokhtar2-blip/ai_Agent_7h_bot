@@ -76,3 +76,54 @@
 - [x] Engine does not create project files
 ### Completion
 - [x] STOP and wait for Specification 010
+
+## Phase 10: Project Context Engine (Specification 010) ✅ COMPLETE
+### Data Model
+- [x] project_context/context_data.py — ProjectContext and all sub-dataclasses
+- [x] project_context/blueprint_reader.py — BlueprintReader
+- [x] project_context/validation_reader.py — ValidationReader
+- [x] project_context/structure_reader.py — StructureReader
+- [x] project_context/registry_reader.py — RegistryReader
+- [x] project_context/file_plan_reader.py — FilePlanReader
+- [x] project_context/dependency_reader.py — DependencyReader
+### Helpers
+- [x] project_context/context_assembler.py — ContextAssembler
+- [x] project_context/context_linker.py — ContextLinker (O(1) indices)
+- [x] project_context/context_validator.py — ContextValidator
+### Engine
+- [x] project_context/project_context_engine.py — ProjectContextEngine
+- [x] project_context/__init__.py — exports
+### Integration
+- [x] Wire ProjectContextEngine into generators __init__.py
+- [x] Wire ProjectContextEngine into bootstrap (priority 96, deps [dependency_resolver])
+### Testing
+- [x] Create comprehensive test script (tests/test_project_context.py)
+- [x] Run tests and verify all pass
+### Completion
+- [x] STOP and wait for Specification 011
+
+## Phase 11: Project Intelligence Graph Engine (Specification 011) ✅ COMPLETE
+### Data Model
+- [x] intelligence_graph/graph_data.py — ProjectIntelligenceGraph, GraphNode, GraphEdge, GraphFinding, GraphIndices, GraphProvenance, all 19 node-type constants, 12 edge-kind constants, category constants, severity constants
+### Helpers
+- [x] intelligence_graph/graph_builder.py — GraphBuilder (converts 7 artefacts into nodes + edges)
+- [x] intelligence_graph/graph_navigator.py — GraphNavigator (O(1) lookup indices for fast traversal)
+- [x] intelligence_graph/circular_detector.py — CircularDetector (circular deps, broken refs, unused, orphan, dead)
+- [x] intelligence_graph/graph_validator.py — GraphValidator (internal consistency)
+### Engine
+- [x] intelligence_graph/intelligence_graph_engine.py — IntelligenceGraphEngine
+- [x] intelligence_graph/__init__.py — exports
+### Integration
+- [x] Wire IntelligenceGraphEngine into generators __init__.py
+- [x] Wire IntelligenceGraphEngine into bootstrap (priority 97, deps [project_context])
+### Bug Fixes
+- [x] Fix _DEPENDENCY_EDGE_KINDS: remove EDGE_REQUIRED_BY (reverse edge) to prevent false 2-cycles between component↔dependency pairs
+- [x] Fix test helpers: use correct constructor signatures (FeatureUnit.build_priority, BlueprintValidationReport.quality, etc.)
+- [x] Fix bootstrap test unpacking order (registry, orchestrator, manager)
+- [x] Fix test assertions to match actual test data (feature names, component counts, dependency names, route/command counts)
+- [x] Fix test_detector_dead_components: remove self-loop edge so dead node has no outgoing edges
+### Testing
+- [x] Create comprehensive test script (tests/test_intelligence_graph.py) — 127 tests across 13 sections
+- [x] Run tests and verify all pass — 127/127 passed
+### Completion
+- [x] STOP and wait for Specification 012

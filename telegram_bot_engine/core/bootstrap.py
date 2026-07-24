@@ -34,6 +34,7 @@ from ..engines.generators import (
     VisualPageReconstructionEngine,
     DependencyResolutionEngine,
     ProjectContextEngine,
+    IntelligenceGraphEngine,
 )
 from ..logging import EngineLogger
 from ..manager import CoreEngineManager
@@ -151,6 +152,20 @@ def bootstrap(
     project_context_engine = ProjectContextEngine()
     registry.register_engine(project_context_engine)
 
+    # -- intelligence graph engine (Specification 011) ------------------
+    # The intelligence graph engine builds the complete, intelligent
+    # project graph by converting the seven upstream artefacts
+    # (blueprint, validation report, structure map, component
+    # registry, file plan, dependency report, and project context)
+    # into a single Project Intelligence Graph with 19 node types
+    # and 12 edge kinds.  It produces O(1) look-up indices for
+    # fast navigation and detects circular dependencies, broken
+    # references, unused components, orphan files, and dead
+    # components.  It does not write code, create files, or make
+    # build decisions.
+    intelligence_graph_engine = IntelligenceGraphEngine()
+    registry.register_engine(intelligence_graph_engine)
+
     # -- validators --------------------------------------------------------
     registry.register_validator(BlueprintValidator())
     registry.register_validator(StructureValidator())
@@ -185,6 +200,8 @@ def bootstrap(
                      priority=95, dependencies=["file_planner"])
     manager.register(project_context_engine, engine_id="project_context",
                      priority=96, dependencies=["dependency_resolver"])
+    manager.register(intelligence_graph_engine, engine_id="intelligence_graph",
+                     priority=97, dependencies=["project_context"])
 
     # -- output & pipeline -------------------------------------------------
     output_manager = OutputManager(config=config)
