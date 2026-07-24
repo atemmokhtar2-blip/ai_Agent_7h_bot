@@ -33,6 +33,7 @@ from ..engines.generators import (
     FileGenerationPlanningEngine,
     VisualPageReconstructionEngine,
     DependencyResolutionEngine,
+    ProjectContextEngine,
 )
 from ..logging import EngineLogger
 from ..manager import CoreEngineManager
@@ -139,6 +140,17 @@ def bootstrap(
     dependency_resolver = DependencyResolutionEngine()
     registry.register_engine(dependency_resolver)
 
+    # -- project context engine (Specification 010) ---------------------
+    # The project context engine builds the complete, unified project
+    # context by merging the Project Blueprint, Blueprint Validation
+    # Report, Project Structure Map, Component Registry, File
+    # Generation Plan, and Dependency Resolution Report.  It produces
+    # a Project Context artefact with precomputed O(1) look-up
+    # indices.  It does not write code, create files, or make build
+    # decisions.
+    project_context_engine = ProjectContextEngine()
+    registry.register_engine(project_context_engine)
+
     # -- validators --------------------------------------------------------
     registry.register_validator(BlueprintValidator())
     registry.register_validator(StructureValidator())
@@ -171,6 +183,8 @@ def bootstrap(
                      priority=90, dependencies=["file_planner"])
     manager.register(dependency_resolver, engine_id="dependency_resolver",
                      priority=95, dependencies=["file_planner"])
+    manager.register(project_context_engine, engine_id="project_context",
+                     priority=96, dependencies=["dependency_resolver"])
 
     # -- output & pipeline -------------------------------------------------
     output_manager = OutputManager(config=config)
