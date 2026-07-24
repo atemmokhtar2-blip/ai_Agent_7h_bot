@@ -15,6 +15,7 @@ from .structure_generator import StructureGenerationEngine
 from .component_detector import ComponentDetectionEngine
 from .file_planner import FileGenerationPlanningEngine
 from .visual_page_reconstruction import VisualPageReconstructionEngine
+from .dependency_resolver import DependencyResolutionEngine
 
 __all__ = [
     "IntentParserEngine",
@@ -26,4 +27,5 @@ __all__ = [
     "ComponentDetectionEngine",
     "FileGenerationPlanningEngine",
     "VisualPageReconstructionEngine",
+    "DependencyResolutionEngine",
 ]

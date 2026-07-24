@@ -32,6 +32,7 @@ from ..engines.generators import (
     ComponentDetectionEngine,
     FileGenerationPlanningEngine,
     VisualPageReconstructionEngine,
+    DependencyResolutionEngine,
 )
 from ..logging import EngineLogger
 from ..manager import CoreEngineManager
@@ -128,6 +129,16 @@ def bootstrap(
     visual_reconstructor = VisualPageReconstructionEngine()
     registry.register_engine(visual_reconstructor)
 
+    # -- dependency resolution engine (Specification 009) ----------------
+    # The dependency resolver builds the complete dependency map for
+    # the project before construction begins.  It reads the blueprint,
+    # validation report, structure map, component registry, and file
+    # generation plan, and produces a Dependency Resolution Report.
+    # It does not write code, create files, install libraries, or add
+    # dependencies.
+    dependency_resolver = DependencyResolutionEngine()
+    registry.register_engine(dependency_resolver)
+
     # -- validators --------------------------------------------------------
     registry.register_validator(BlueprintValidator())
     registry.register_validator(StructureValidator())
@@ -158,6 +169,8 @@ def bootstrap(
     manager.register(visual_reconstructor,
                      engine_id="visual_page_reconstruction",
                      priority=90, dependencies=["file_planner"])
+    manager.register(dependency_resolver, engine_id="dependency_resolver",
+                     priority=95, dependencies=["file_planner"])
 
     # -- output & pipeline -------------------------------------------------
     output_manager = OutputManager(config=config)
