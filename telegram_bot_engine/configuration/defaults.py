@@ -381,6 +381,94 @@ def build_default_schema() -> ConfigSchema:
         ],
     )
 
+    requirement_intelligence_section = SectionSchema(
+        name="requirement_intelligence",
+        description=(
+            "Controls the Requirement Intelligence Engine "
+            "(Specification 012).  These settings determine how the "
+            "Requirement Intelligence Report is built — whether the "
+            "engine proceeds even when upstream artefacts have "
+            "warnings, whether error-level findings cause the engine "
+            "to fail, and the thresholds used during quality "
+            "validation and priority assignment."
+        ),
+        fields=[
+            FieldSchema(
+                name="proceed_on_warning",
+                type=bool,
+                default=True,
+                description=(
+                    "When True the requirement intelligence engine "
+                    "proceeds even if upstream artefacts (analysis "
+                    "report, project context, intelligence graph) "
+                    "have warnings.  When False, the engine only "
+                    "proceeds when all upstream artefacts are clean."
+                ),
+            ),
+            FieldSchema(
+                name="fail_on_errors",
+                type=bool,
+                default=True,
+                description=(
+                    "When True the engine returns a failed "
+                    "StageResult when any error-level findings are "
+                    "detected (e.g. requirement conflicts, quality "
+                    "violations, contradictory technologies).  When "
+                    "False, the engine records the findings but "
+                    "returns a successful result."
+                ),
+            ),
+            FieldSchema(
+                name="fail_on_quality_violations",
+                type=bool,
+                default=True,
+                description=(
+                    "When True the engine returns a failed "
+                    "StageResult when the quality validator detects "
+                    "any quality violations (e.g. requirements "
+                    "without a description, goal, reason, or "
+                    "priority).  When False, quality violations are "
+                    "recorded as findings but do not cause failure."
+                ),
+            ),
+            FieldSchema(
+                name="default_quality_level",
+                type=str,
+                default="standard",
+                description=(
+                    "The quality level assigned to the project when "
+                    "the user's request does not explicitly specify "
+                    "one."
+                ),
+                choices=["minimal", "standard", "high", "production"],
+            ),
+            FieldSchema(
+                name="max_implicit_ratio",
+                type=float,
+                default=0.5,
+                description=(
+                    "The maximum allowed ratio of implicit "
+                    "requirements to total requirements.  When the "
+                    "implicit ratio exceeds this value, a warning "
+                    "finding is emitted."
+                ),
+                validator=lambda v: 0.0 <= v <= 1.0,
+            ),
+            FieldSchema(
+                name="min_intent_confidence",
+                type=float,
+                default=0.3,
+                description=(
+                    "The minimum overall intent-confidence score "
+                    "(0.0-1.0) below which a warning finding is "
+                    "emitted, indicating that the user's intent is "
+                    "not understood with sufficient precision."
+                ),
+                validator=lambda v: 0.0 <= v <= 1.0,
+            ),
+        ],
+    )
+
     return ConfigSchema(
         sections=[
             logging_section,
@@ -392,6 +480,7 @@ def build_default_schema() -> ConfigSchema:
             structure_generator_section,
             component_detector_section,
             file_planner_section,
+            requirement_intelligence_section,
         ],
     )
 

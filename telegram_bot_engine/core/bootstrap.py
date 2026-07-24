@@ -31,10 +31,10 @@ from ..engines.generators import (
     StructureGenerationEngine,
     ComponentDetectionEngine,
     FileGenerationPlanningEngine,
-    VisualPageReconstructionEngine,
     DependencyResolutionEngine,
     ProjectContextEngine,
     IntelligenceGraphEngine,
+    RequirementIntelligenceEngine,
 )
 from ..logging import EngineLogger
 from ..manager import CoreEngineManager
@@ -124,13 +124,6 @@ def bootstrap(
     file_planner = FileGenerationPlanningEngine()
     registry.register_engine(file_planner)
 
-    # -- visual page reconstruction engine (Specification 009) -----------
-    # The PDFX AI Visual Page Reconstruction Engine reads a PDF,
-    # analyses every element, and rebuilds it with pixel-accurate
-    # fidelity.  It does not write code or create project files.
-    visual_reconstructor = VisualPageReconstructionEngine()
-    registry.register_engine(visual_reconstructor)
-
     # -- dependency resolution engine (Specification 009) ----------------
     # The dependency resolver builds the complete dependency map for
     # the project before construction begins.  It reads the blueprint,
@@ -166,6 +159,20 @@ def bootstrap(
     intelligence_graph_engine = IntelligenceGraphEngine()
     registry.register_engine(intelligence_graph_engine)
 
+    # -- requirement intelligence engine (Specification 012) -------------
+    # The requirement intelligence engine understands the user's
+    # request with the highest possible precision and converts it into
+    # a precise set of engineering requirements.  It reads the four
+    # data sources (user request, project context, intelligence graph,
+    # and knowledge base), performs intent analysis across five
+    # dimensions, classifies requirements into nine categories,
+    # detects missing information, ambiguity points, and conflicts,
+    # assigns priorities, validates quality, and produces a
+    # Requirement Intelligence Report.  It does not write code,
+    # create files, choose libraries, or make build decisions.
+    requirement_intelligence_engine = RequirementIntelligenceEngine()
+    registry.register_engine(requirement_intelligence_engine)
+
     # -- validators --------------------------------------------------------
     registry.register_validator(BlueprintValidator())
     registry.register_validator(StructureValidator())
@@ -193,15 +200,15 @@ def bootstrap(
                      priority=70, dependencies=["structure_generator"])
     manager.register(file_planner, engine_id="file_planner",
                      priority=80, dependencies=["component_detector"])
-    manager.register(visual_reconstructor,
-                     engine_id="visual_page_reconstruction",
-                     priority=90, dependencies=["file_planner"])
     manager.register(dependency_resolver, engine_id="dependency_resolver",
                      priority=95, dependencies=["file_planner"])
     manager.register(project_context_engine, engine_id="project_context",
                      priority=96, dependencies=["dependency_resolver"])
     manager.register(intelligence_graph_engine, engine_id="intelligence_graph",
                      priority=97, dependencies=["project_context"])
+    manager.register(requirement_intelligence_engine,
+                     engine_id="requirement_intelligence",
+                     priority=98, dependencies=["intelligence_graph"])
 
     # -- output & pipeline -------------------------------------------------
     output_manager = OutputManager(config=config)

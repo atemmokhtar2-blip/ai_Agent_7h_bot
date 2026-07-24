@@ -6,7 +6,6 @@ from .validate_blueprint_stage import ValidateBlueprintStage
 from .generate_stage import GenerateStage
 from .validate_output_stage import ValidateOutputStage
 from .package_stage import PackageStage
-from .visual_reconstruction_stage import VisualReconstructionStage
 
 __all__ = [
     "ParseStage",
@@ -15,5 +14,4 @@ __all__ = [
     "GenerateStage",
     "ValidateOutputStage",
     "PackageStage",
-    "VisualReconstructionStage",
 ]
