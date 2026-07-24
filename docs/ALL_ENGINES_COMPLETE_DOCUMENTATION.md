@@ -1,5 +1,5 @@
 # Telegram Bot Generation Engine
-## Complete Technical Documentation — All 11 Engines
+## Complete Technical Documentation — All 12 Engines
 
 ---
 
@@ -19,12 +19,13 @@
 12. [Engine 09 — Visual Page Reconstruction Engine](#12-engine-09--visual-page-reconstruction-engine)
 13. [Engine 09b — Dependency Resolution Engine](#13-engine-09b--dependency-resolution-engine)
 14. [Engine 10 — Project Context Engine](#14-engine-10--project-context-engine)
-15. [Pipeline Architecture & Data Flow](#15-pipeline-architecture--data-flow)
-16. [Core Engine Manager](#16-core-engine-manager)
-17. [Test Suite Summary](#17-test-suite-summary)
-18. [Technology Stack](#18-technology-stack)
-19. [Design Principles](#19-design-principles)
-20. [Project Statistics](#20-project-statistics)
+15. [Engine 11 — Project Intelligence Graph Engine](#15-engine-11--project-intelligence-graph-engine)
+16. [Pipeline Architecture & Data Flow](#16-pipeline-architecture--data-flow)
+17. [Core Engine Manager](#17-core-engine-manager)
+18. [Test Suite Summary](#18-test-suite-summary)
+19. [Technology Stack](#19-technology-stack)
+20. [Design Principles](#20-design-principles)
+21. [Project Statistics](#21-project-statistics)
 
 ---
 
@@ -34,17 +35,17 @@ The **Telegram Bot Generation Engine** is a modular, pipeline-based system that 
 
 The system is organized as a linear pipeline where each stage reads the outputs (called **artefacts**) of previous stages, performs its specialized work, and writes its own output artefact into a shared **GenerationContext**. No engine ever reads the raw user request directly (except the first two in the understanding phase). No engine ever communicates with another engine directly — all communication flows through the GenerationContext and the Core Engine Manager.
 
-The system is composed of **11 engines** spanning four phases of the build lifecycle:
+The system is composed of **12 engines** spanning four phases of the build lifecycle:
 
 **Phase 1 — Understanding (Engines 1–3):** The system reads the user's natural-language request, analyses it deeply, parses it into a structured intent, and composes a preliminary blueprint.
 
 **Phase 2 — Planning (Engines 4–5):** The system converts the analysis report into a professional Project Blueprint with a full execution plan, then validates that blueprint through six independent layers.
 
-**Phase 3 — Generation Planning (Engines 6–10):** The system builds the physical structure map, detects all components, plans all files, resolves all dependencies, and merges everything into a unified Project Context — all before any file is created on disk or any line of code is written.
+**Phase 3 — Generation Planning (Engines 6–11):** The system builds the physical structure map, detects all components, plans all files, resolves all dependencies, merges everything into a unified Project Context, and converts all of it into a single Project Intelligence Graph with O(1) look-up indices — all before any file is created on disk or any line of code is written.
 
 **Phase 4 — Visual Reconstruction (Engine 9):** A specialized engine that reads PDF files and reconstructs their pages with pixel-accurate visual fidelity.
 
-The total codebase comprises **144 Python source files** totalling **32,383 lines of code**, supported by **8 test files** totalling **13,522 lines** of comprehensive test coverage.
+The total codebase comprises **151 Python source files** totalling **36,404 lines of code**, supported by **9 test files** totalling **16,840 lines** of comprehensive test coverage.
 
 ---
 
@@ -1230,9 +1231,223 @@ The engine stores the `ProjectContext` in:
 
 ---
 
-## 15. Pipeline Architecture & Data Flow
+## 15. Engine 11 — Project Intelligence Graph Engine
 
-### 15.1 Engine Execution Order
+### 15.1 Overview
+
+| Property | Value |
+|----------|-------|
+| **Engine ID** | `intelligence_graph` |
+| **Priority** | 97 |
+| **Dependencies** | `["project_context"]` |
+| **Version** | `1.0.0` |
+| **Tags** | `["generation", "graph", "navigation"]` |
+| **Phase** | `build_graph` |
+| **Source Files** | 7 files, 4,002 lines |
+| **Output Artefact** | `intelligence_graph` (type: `ProjectIntelligenceGraph`) |
+| **Inputs** | 7 artefacts: `project_blueprint` + `blueprint_validation_report` + `project_structure_map` + `component_registry` + `file_generation_plan` + `dependency_resolution_report` + `project_context` |
+
+The **Project Intelligence Graph Engine** is the engine responsible for building the complete, authoritative, intelligent graph of the entire project **before** any code is written or any file is created on disk. It does **not** write code, create files, or make build decisions. Its sole function is to convert all seven upstream artefacts into a single `ProjectIntelligenceGraph` — a typed graph with **19 node types** and **12 edge kinds**, precomputed **O(1) look-up indices**, circular-dependency detection, structural-problem detection, and internal-consistency validation. The graph is the **single reference point** for all downstream engines: instead of re-reading the seven upstream artefacts, every downstream engine reads the graph and uses the precomputed indices to access any piece of information in O(1) time and reach any element in very few steps.
+
+### 15.2 The Four Sub-Components
+
+The engine delegates its work to four specialised sub-components, each with a single responsibility:
+
+| Sub-Component | File | Responsibility |
+|---------------|------|----------------|
+| `GraphBuilder` | `graph_builder.py` | Converts all 7 artefacts into graph nodes and edges |
+| `GraphNavigator` | `graph_navigator.py` | Builds the O(1) look-up indices for fast traversal |
+| `CircularDetector` | `circular_detector.py` | Detects circular dependencies and structural problems |
+| `GraphValidator` | `graph_validator.py` | Validates the graph for internal consistency |
+
+### 15.3 The Graph Builder
+
+The `GraphBuilder` is the heart of the engine. It reads all seven upstream artefacts and converts every element into a `GraphNode`, and every relationship into a `GraphEdge`. The builder creates the following node types from each artefact:
+
+- **From the Project Blueprint (`project_blueprint`):** project node, feature nodes, stage nodes, route nodes, command nodes, environment variable nodes.
+- **From the Component Registry (`component_registry`):** component nodes, service nodes, middleware nodes, repository nodes.
+- **From the Project Structure Map (`project_structure_map`):** folder nodes, file nodes.
+- **From the File Generation Plan (`file_generation_plan`):** file nodes (enriched with building-engine and source-component metadata).
+- **From the Dependency Resolution Report (`dependency_resolution_report`):** dependency nodes, library nodes, database table nodes.
+- **From the Project Context (`project_context`):** configuration nodes, additional cross-links.
+
+The builder then creates the following edge kinds:
+
+- **`EDGE_CONTAINS`** — a project contains features, components, folders, files, stages, routes, commands, configurations, environment variables; a folder contains files; a stage contains components.
+- **`EDGE_DEPENDS_ON`** — a component depends on a dependency, library, or database table.
+- **`EDGE_REQUIRED_BY`** — the reverse of `EDGE_DEPENDS_ON` (a dependency is required by a component). This is intentionally excluded from circular-dependency detection to avoid false 2-cycles.
+- **`EDGE_USES`** — a file uses a dependency or a file uses another file.
+- **`EDGE_REFERENCES`** — a component references a file, a feature references a component, a file references a dependency.
+- **`EDGE_CREATES`** — a component creates a file.
+- **`EDGE_IMPLEMENTS`** — a component implements an interface or feature.
+- **`EDGE_CALLS`** — a component or file calls a function.
+- **`EDGE_READS`** — a component reads a configuration or environment variable.
+- **`EDGE_WRITES`** — a component writes to a database table or configuration.
+- **`EDGE_EXTENDS`** — a class extends another class.
+- **`EDGE_IMPORTS`** — a file imports a dependency.
+
+The builder uses the format `"<type>:<name>"` for node IDs (e.g. `"component:database"`, `"dependency:SQLAlchemy"`) and `"<source_id>--<kind>-->[target_id]"` for edge IDs, ensuring globally unique identifiers.
+
+### 15.4 The Graph Navigator
+
+The `GraphNavigator` builds the **11 O(1) look-up indices** stored in `GraphIndices`:
+
+1. `node_by_id` — Node ID → `GraphNode`.
+2. `nodes_by_type` — Node type → list of node IDs.
+3. `node_by_name` — Element name → node ID (for type-unambiguous names; the first registered wins).
+4. `node_id_by_type_and_name` — (type, name) → node ID (for disambiguated look-ups).
+5. `edges_by_source` — Source node ID → list of `GraphEdge` objects.
+6. `edges_by_target` — Target node ID → list of `GraphEdge` objects.
+7. `out_edges` — Source node ID → list of target node IDs.
+8. `in_edges` — Target node ID → list of source node IDs.
+9. `out_edges_by_kind` — (source node ID, edge kind) → list of target node IDs.
+10. `in_edges_by_kind` — (target node ID, edge kind) → list of source node IDs.
+11. `edges_by_kind` — Edge kind → list of `GraphEdge` objects.
+
+The `ProjectIntelligenceGraph` exposes all of these indices through convenience methods: `get_node(node_id)`, `get_node_by_name(name)`, `get_node_by_type_and_name(type, name)`, `nodes_of_type(type)`, `node_ids_of_type(type)`, `outgoing(node_id)`, `incoming(node_id)`, `outgoing_by_kind(node_id, kind)`, `incoming_by_kind(node_id, kind)`, `edges_from(node_id)`, `edges_to(node_id)`, `edges_of_kind(kind)`, `neighbours(node_id)`.
+
+For multi-hop navigation, the graph provides `reachable(node_id, max_hops=8)` (breadth-first traversal) and `shortest_path(source_id, target_id, max_hops=16)` (breadth-first search).
+
+### 15.5 The Circular Detector
+
+The `CircularDetector` finds structural problems in the graph. It uses a **three-colour DFS** (WHITE/GREY/BLACK) with a recursion stack to detect circular dependencies in O(V+E) time. The detector performs five checks:
+
+1. **Circular dependencies** (`CATEGORY_CIRCULAR_DEPENDENCY`) — finds cycles in the dependency sub-graph. Only forward edges (`EDGE_DEPENDS_ON`, `EDGE_IMPORTS`, `EDGE_USES`) are followed; `EDGE_REQUIRED_BY` is intentionally excluded because it is the reverse of `EDGE_DEPENDS_ON` and would produce a false 2-cycle for every component-dependency pair. Cycles are normalised by rotating so the lexicographically smallest node ID is first, to avoid reporting the same cycle multiple times.
+2. **Broken references** (`CATEGORY_BROKEN_REFERENCE`) — finds edges whose source or target node does not exist.
+3. **Unused components** (`CATEGORY_UNUSED_COMPONENT`) — finds components that are not required by any other component.
+4. **Orphan files** (`CATEGORY_ORPHAN_FILE`) — finds files that are not contained in any folder.
+5. **Dead components** (`CATEGORY_DEAD_COMPONENT`) — finds components that have no outgoing edges (they do not depend on anything and nothing depends on them).
+
+Each finding is a `GraphFinding` with a severity (`SEVERITY_ERROR`, `SEVERITY_WARNING`, `SEVERITY_INFO`), a code, a message, an affected element, a category, an optional resolution hint, and (for circular-dependency findings) the list of node IDs that form the cycle.
+
+### 15.6 The Graph Validator
+
+The `GraphValidator` validates the graph for internal consistency. It performs nine checks:
+
+1. **Duplicate node IDs** — no two nodes may have the same ID.
+2. **Duplicate edge IDs** — no two edges may have the same ID.
+3. **Edges reference existing nodes** — every edge's source and target must exist in the graph.
+4. **Node types are valid** — every node's type must be one of the `NODE_TYPE_*` constants.
+5. **Edge kinds are valid** — every edge's kind must be one of the `EDGE_*` constants.
+6. **Node required fields** — every node must have a non-empty ID, type, and name.
+7. **No self-loops** — no edge may have the same source and target.
+8. **Project node exists** — the graph must contain exactly one project node.
+9. **Indices consistency** — the precomputed indices must be consistent with the nodes and edges.
+
+### 15.7 Data Model (ProjectIntelligenceGraph)
+
+The `ProjectIntelligenceGraph` contains:
+
+- `nodes: List[GraphNode]` — the graph nodes (19 types).
+- `edges: List[GraphEdge]` — the graph edges (12 kinds).
+- `indices: GraphIndices` — the 11 O(1) look-up indices.
+- `findings: List[GraphFinding]` — validation findings from the detector and validator.
+- `provenance: GraphProvenance` — traceability record (which artefacts were used).
+- `summary: str` — human-readable summary.
+- `notes: List[str]` and `warnings: List[str]` — supplementary information.
+
+**GraphNode** fields: `node_id` (format `"<type>:<name>"`), `type` (one of 19 `NODE_TYPE_*` constants), `name`, `display_name`, `description`, `priority` (lower values built first), `owner_engine`, `source` (which `SOURCE_*` artefact), `metadata` (type-specific), `neighbours` (convenience list of connected node IDs).
+
+**GraphEdge** fields: `edge_id` (format `"<source_id>--<kind>-->[target_id]"`), `source_id`, `target_id`, `kind` (one of 12 `EDGE_*` constants), `source` (which `SOURCE_*` artefact), `description`.
+
+**GraphFinding** fields: `severity` (`SEVERITY_ERROR`/`SEVERITY_WARNING`/`SEVERITY_INFO`), `code`, `message`, `affected`, `category` (one of `CATEGORY_*` constants), `resolution_hint`, `cycle` (for circular-dependency findings).
+
+**GraphProvenance** fields: `project_name`, `blueprint_name`, `validation_status`, `structure_map_name`, `component_registry_name`, `file_plan_name`, `dependency_report_name`, `project_context_name`, `all_sources_used`.
+
+**Convenience properties on `ProjectIntelligenceGraph`:** `node_count`, `edge_count`, `finding_count`, `is_empty`, `has_errors`, `error_count`, `warning_count`, `node_type_count`, `edge_kind_count`.
+
+**O(1) look-up methods:** `get_node(node_id)`, `get_node_by_name(name)`, `get_node_by_type_and_name(type, name)`, `nodes_of_type(type)`, `node_ids_of_type(type)`, `outgoing(node_id)`, `incoming(node_id)`, `outgoing_by_kind(node_id, kind)`, `incoming_by_kind(node_id, kind)`, `edges_from(node_id)`, `edges_to(node_id)`, `edges_of_kind(kind)`, `neighbours(node_id)`.
+
+**Multi-hop navigation methods:** `reachable(node_id, max_hops=8)`, `shortest_path(source_id, target_id, max_hops=16)`.
+
+### 15.8 Node-Type Constants (19)
+
+```python
+NODE_TYPE_PROJECT = "project"
+NODE_TYPE_FOLDER = "folder"
+NODE_TYPE_FILE = "file"
+NODE_TYPE_CLASS = "class"
+NODE_TYPE_FUNCTION = "function"
+NODE_TYPE_INTERFACE = "interface"
+NODE_TYPE_COMPONENT = "component"
+NODE_TYPE_FEATURE = "feature"
+NODE_TYPE_DEPENDENCY = "dependency"
+NODE_TYPE_LIBRARY = "library"
+NODE_TYPE_DATABASE_TABLE = "database_table"
+NODE_TYPE_ROUTE = "route"
+NODE_TYPE_COMMAND = "command"
+NODE_TYPE_CONFIGURATION = "configuration"
+NODE_TYPE_ENVIRONMENT_VARIABLE = "environment_variable"
+NODE_TYPE_SERVICE = "service"
+NODE_TYPE_MIDDLEWARE = "middleware"
+NODE_TYPE_REPOSITORY = "repository"
+NODE_TYPE_STAGE = "stage"
+```
+
+### 15.9 Edge-Kind Constants (12)
+
+```python
+EDGE_USES = "uses"
+EDGE_IMPORTS = "imports"
+EDGE_DEPENDS_ON = "depends_on"
+EDGE_CALLS = "calls"
+EDGE_CREATES = "creates"
+EDGE_READS = "reads"
+EDGE_WRITES = "writes"
+EDGE_EXTENDS = "extends"
+EDGE_IMPLEMENTS = "implements"
+EDGE_CONTAINS = "contains"
+EDGE_REFERENCES = "references"
+EDGE_REQUIRED_BY = "required_by"
+```
+
+### 15.10 Source-Artefact Constants (7)
+
+```python
+SOURCE_BLUEPRINT = "blueprint"
+SOURCE_VALIDATION = "validation"
+SOURCE_STRUCTURE = "structure"
+SOURCE_COMPONENT_REGISTRY = "component_registry"
+SOURCE_FILE_PLAN = "file_plan"
+SOURCE_DEPENDENCY_REPORT = "dependency_report"
+SOURCE_PROJECT_CONTEXT = "project_context"
+```
+
+### 15.11 Finding-Category Constants (7)
+
+```python
+CATEGORY_CIRCULAR_DEPENDENCY = "circular_dependency"
+CATEGORY_BROKEN_REFERENCE = "broken_reference"
+CATEGORY_UNUSED_COMPONENT = "unused_component"
+CATEGORY_ORPHAN_FILE = "orphan_file"
+CATEGORY_DEAD_COMPONENT = "dead_component"
+CATEGORY_CONSISTENCY = "consistency"
+CATEGORY_STRUCTURE = "structure"
+```
+
+### 15.12 Sub-Modules
+
+| File | Lines | Responsibility |
+|------|-------|----------------|
+| `intelligence_graph_engine.py` | ~470 | Main engine class — orchestrates builder, navigator, detector, validator |
+| `graph_data.py` | ~849 | All data classes and constants (19 node types, 12 edge kinds, 7 sources, 7 categories) |
+| `graph_builder.py` | ~1,483 | Converts all 7 artefacts into graph nodes and edges |
+| `graph_navigator.py` | ~159 | Builds the 11 O(1) look-up indices |
+| `circular_detector.py` | ~429 | Detects circular dependencies (3-colour DFS), broken references, unused components, orphan files, dead components |
+| `graph_validator.py` | ~438 | Validates graph for internal consistency (9 checks) |
+| `__init__.py` | ~174 | Package exports |
+
+### 15.13 Output
+
+The engine stores the `ProjectIntelligenceGraph` in:
+- `context.artefacts["intelligence_graph"]`
+- `context.metadata["intelligence_graph"]`
+
+---
+
+## 16. Pipeline Architecture & Data Flow
+
+### 16.1 Engine Execution Order
 
 The Core Engine Manager uses topological sorting based on priorities and dependencies to determine the execution order. The registered order is:
 
@@ -1249,8 +1464,9 @@ The Core Engine Manager uses topological sorting based on priorities and depende
 | 9 | `visual_page_reconstruction` | 90 | `["file_planner"]` | `page_analyses`, `rebuilt_pdf_bytes`, `visual_similarity_reports` |
 | 10 | `dependency_resolver` | 95 | `["file_planner"]` | `dependency_resolution_report` |
 | 11 | `project_context` | 96 | `["dependency_resolver"]` | `project_context` |
+| 12 | `intelligence_graph` | 97 | `["project_context"]` | `intelligence_graph` |
 
-### 15.2 Artefact Flow Diagram
+### 16.2 Artefact Flow Diagram
 
 ```
 User Request (raw text)
@@ -1286,16 +1502,24 @@ User Request (raw text)
      │              │           │           │           │           │
      ▼              │           │           │           │           │
 [Engine 10: Project Context] ──→ project_context
-                                (merges ALL 6 arteacts:
+                                (merges ALL 6 artefacts:
                                  project_blueprint +
                                  blueprint_validation_report +
                                  project_structure_map +
                                  component_registry +
                                  file_generation_plan +
                                  dependency_resolution_report)
+     |
+     v
+[Engine 11: Intelligence Graph] --> intelligence_graph
+                                   (converts ALL 7 artefacts into a
+                                    single Project Intelligence Graph
+                                    with 19 node types, 12 edge kinds,
+                                    11 O(1) indices, and circular-
+                                    dependency detection)
 ```
 
-### 15.3 The GenerationContext as the Communication Bus
+### 16.3 The GenerationContext as the Communication Bus
 
 All artefacts flow through the `GenerationContext.artefacts` dictionary. No engine ever accesses another engine directly. The context is the sole communication channel:
 
@@ -1306,7 +1530,7 @@ Engine B reads:  value = context.get("artefact_name")
 
 Every engine also stores its output in `context.metadata` for easy access by the pipeline and external tools.
 
-### 15.4 The Pipeline Orchestrator
+### 16.4 The Pipeline Orchestrator
 
 The `PipelineOrchestrator` drives the full generation lifecycle. It builds the ordered list of pipeline stages:
 
@@ -1321,9 +1545,9 @@ The orchestrator is **fail-fast**: it stops the pipeline on the first failing st
 
 ---
 
-## 16. Core Engine Manager
+## 17. Core Engine Manager
 
-### 16.1 Overview
+### 17.1 Overview
 
 The **Core Engine Manager** (`CoreEngineManager`) is the sole authority over every engine in the system. It does **not** generate code, create files, or analyse requests. Its responsibilities are:
 
@@ -1349,7 +1573,7 @@ The **Core Engine Manager** (`CoreEngineManager`) is the sole authority over eve
 
 9. **Future-ready** — the manager scales to hundreds of engines without redesign. New engines can be added without modifying existing ones.
 
-### 16.2 Lifecycle States
+### 17.2 Lifecycle States
 
 ```
 Registered → Loaded → Initialized → Ready → Running → Completed
@@ -1358,7 +1582,7 @@ Registered → Loaded → Initialized → Ready → Running → Completed
 
 The `EngineState` enum defines these states, and the `EngineStateTransition` class validates that transitions are legal (no skipping states, no going back except to `Failed`).
 
-### 16.3 Manager vs Registry
+### 17.3 Manager vs Registry
 
 The manager is deliberately separate from the `EngineRegistry`:
 
@@ -1367,7 +1591,7 @@ The manager is deliberately separate from the `EngineRegistry`:
 
 The manager *uses* the registry for lookup but adds all the policy enforcement.
 
-### 16.4 Manager Sub-Modules
+### 17.4 Manager Sub-Modules
 
 | File | Responsibility |
 |------|----------------|
@@ -1377,7 +1601,7 @@ The manager *uses* the registry for lookup but adds all the policy enforcement.
 | `lifecycle.py` | `EngineState`, `EngineStateTransition` — lifecycle states and transitions |
 | `errors.py` | `DependencyError`, `DuplicateEngineError`, `LifecycleError`, `ManagerError`, `SecurityError`, `UnknownEngineError` |
 
-### 16.5 ManagerResult
+### 17.5 ManagerResult
 
 The `ManagerResult` is the outcome of a full managed run:
 
@@ -1391,9 +1615,9 @@ The `ManagerResult` is the outcome of a full managed run:
 
 ---
 
-## 17. Test Suite Summary
+## 18. Test Suite Summary
 
-### 17.1 Test Files
+### 18.1 Test Files
 
 | Test File | Lines | Engine Tested |
 |-----------|-------|---------------|
@@ -1405,9 +1629,10 @@ The `ManagerResult` is the outcome of a full managed run:
 | `tests/test_project_planner.py` | 1,215 | Project Planning Engine |
 | `tests/test_structure_generator.py` | 1,299 | Structure Generation Engine |
 | `tests/test_visual_page_reconstruction.py` | 1,482 | Visual Page Reconstruction Engine |
-| **Total** | **13,522** | **8 test files** |
+| `tests/test_intelligence_graph.py` | 3,318 | Project Intelligence Graph Engine |
+| **Total** | **16,840** | **9 test files** |
 
-### 17.2 Test Coverage
+### 18.2 Test Coverage
 
 - **Blueprint Validator:** Tests cover all 6 validation layers, conflict detection, quality scoring, approval/rejection logic, and edge cases (empty blueprint, missing fields, conflicting features).
 - **Dependency Resolver:** Tests cover all 11 steps, component analysis, library determination, dependency graph building, compatibility checking, conflict detection, optimization, security checking, and plan validation.
@@ -1417,16 +1642,17 @@ The `ManagerResult` is the outcome of a full managed run:
 - **Project Planner:** Tests cover all 10 internal steps, feature breakdown, component building, relationship building, dependency graph, execution plan, risk detection, and validation.
 - **Structure Generator:** Tests cover all 8 steps, folder planning, file planning, naming, build order computation, and structure validation.
 - **Visual Page Reconstruction:** Tests cover all 4 phases, page analysis, image extraction, layout rebuilding, choice detection, coordinate mapping, and visual validation (95% threshold).
+- **Project Intelligence Graph:** 127 tests covering all data classes (GraphNode, GraphEdge, GraphFinding, GraphIndices, GraphProvenance, ProjectIntelligenceGraph), all 19 node-type constants, all 12 edge-kind constants, all 7 source-artefact constants, all 7 category constants, the graph builder (7 artefact → nodes + edges), the graph navigator (11 O(1) indices), the circular detector (3-colour DFS, cycle normalisation, broken references, unused components, orphan files, dead components), the graph validator (9 consistency checks), the main engine (type-checking, output verification), graph integrity, bootstrap registration, serialisation, and end-to-end integration. All 127 tests pass.
 
 ---
 
-## 18. Technology Stack
+## 19. Technology Stack
 
-### 18.1 Programming Language
+### 19.1 Programming Language
 
 - **Python 3.11** — the entire system is written in Python 3.11 using modern features: dataclasses, type hints, `from __future__ import annotations`, `Optional`, `Dict`, `List`, `Any`, `field(default_factory=...)`.
 
-### 18.2 Libraries and Frameworks
+### 19.2 Libraries and Frameworks
 
 | Library | Purpose | Used By |
 |---------|---------|---------|
@@ -1437,7 +1663,7 @@ The `ManagerResult` is the outcome of a full managed run:
 | `yt-dlp` | Media downloading (generated projects use this) | Blueprint Composer |
 | `stripe` | Payment processing (generated projects use this) | Blueprint Composer |
 
-### 18.3 Design Patterns and Techniques
+### 19.3 Design Patterns and Techniques
 
 | Pattern | Usage |
 |---------|-------|
@@ -1447,7 +1673,10 @@ The `ManagerResult` is the outcome of a full managed run:
 | **Separation of Concerns** | Each engine has a single, well-defined responsibility. No engine does work outside its scope. |
 | **Artefact-Based Communication** | Engines communicate through artefacts in the `GenerationContext`, never directly. |
 | **Dataclass-Based Data Models** | All data models use Python dataclasses with `field(default_factory=...)`. |
-| **O(1) Look-up Indices** | The Project Context Engine precomputes 12 O(1) look-up indices for fast querying. |
+| **O(1) Look-up Indices** | The Project Context Engine precomputes 12 O(1) look-up indices; the Intelligence Graph Engine precomputes 11 O(1) look-up indices for fast graph traversal. |
+| **Graph-Based Architecture** | The Intelligence Graph Engine converts all 7 artefacts into a single typed graph with 19 node types and 12 edge kinds, enabling O(1) look-up and multi-hop navigation. |
+| **Three-Colour DFS** | The Circular Detector uses a WHITE/GREY/BLACK DFS with recursion stack to detect cycles in O(V+E) time. |
+| **Cycle Normalisation** | Circular dependencies are normalised by rotating the cycle so the lexicographically smallest node ID is first, preventing duplicate cycle reports. |
 | **Topological Sorting** | Used for build order computation (Component Detector), generation order (File Planner), and load order (Dependency Resolver). |
 | **Layered Validation** | The Blueprint Validator uses 6 independent validation layers. |
 | **Multi-Stage Analysis** | The Analyzer uses 10 sequential stages with shared mutable state. |
@@ -1458,7 +1687,7 @@ The `ManagerResult` is the outcome of a full managed run:
 | **Arabic-English Transliteration** | The `_slugify()` function transliterates Arabic text to English slugs for package names. |
 | **Conditional Imports** | The Visual Page Reconstruction Engine conditionally imports `pdfplumber`. |
 
-### 18.4 Error Handling
+### 19.4 Error Handling
 
 - Every engine's `execute()` method returns a `StageResult` with `success`, `errors`, and `warnings`.
 - The pipeline is **fail-fast**: the first failing engine stops the entire pipeline.
@@ -1466,7 +1695,7 @@ The `ManagerResult` is the outcome of a full managed run:
 - Each engine performs type-checking on its input artefacts and returns a `failed` result with a descriptive error message if an artefact is missing or has the wrong type.
 - Each engine distinguishes between **errors** (stop the pipeline) and **warnings** (continue but log).
 
-### 18.5 Logging
+### 19.5 Logging
 
 The system uses a custom logging module (`telegram_bot_engine/logging/logger.py`) with the `get_logger(name)` function. Every engine gets its own logger via `self._log = get_logger(f"engine.{name}")`. The logging is structured with metadata dictionaries:
 
@@ -1481,70 +1710,70 @@ self._log.info("Analysis complete", {
 
 ---
 
-## 19. Design Principles
+## 20. Design Principles
 
-### 19.1 Single Responsibility
+### 20.1 Single Responsibility
 
 Every engine has exactly one responsibility. The analyzer analyses, the planner plans, the validator validates, the structure generator builds structure, the component detector detects components, and so on. No engine performs work outside its designated scope.
 
-### 19.2 No Direct Communication
+### 20.2 No Direct Communication
 
 No engine ever accesses another engine directly. All communication flows through the `GenerationContext.artefacts` dictionary and the `CoreEngineManager`. This keeps the pipeline decoupled and testable.
 
-### 19.3 Forbidden from Reading the Raw Request
+### 20.3 Forbidden from Reading the Raw Request
 
 With the exception of the Analyzer and Intent Parser (the first two engines in the understanding phase), no engine is allowed to read the user's raw request. Every engine reads only the artefacts produced by upstream engines. This ensures that the analysis is done once, authoritatively, and all downstream engines work from the same data.
 
-### 19.4 No Code Generation Before Planning
+### 20.4 No Code Generation Before Planning
 
 No engine writes code, creates files, or builds anything on disk until the entire planning and validation phase is complete. The first 8 engines (1–8) produce only data models and plans. Only after the blueprint is validated, the structure is planned, components are detected, files are planned, and dependencies are resolved does the system have enough information to start generating code.
 
-### 19.5 Traceability
+### 20.5 Traceability
 
 Every piece of information in the `ProjectContext` records its source artefact. The `SourceProvenance` mapping allows any downstream engine to trace any piece of information back to the artefact that produced it.
 
-### 19.6 Fail-Fast
+### 20.6 Fail-Fast
 
 The pipeline stops on the first failing engine. No downstream engine runs if an upstream engine has failed. This prevents cascading errors and makes debugging easier.
 
-### 19.6 Deterministic Execution Order
+### 20.7 Deterministic Execution Order
 
 The execution order is determined by the `CoreEngineManager` based on priorities and dependencies. No engine can change its own order. The order is deterministic and reproducible.
 
-### 19.7 Read-Only for Downstream
+### 20.8 Read-Only for Downstream
 
 The `ProjectContext` is read-only for all downstream engines — no engine may modify it directly. Any modification requires a dedicated engine.
 
-### 19.8 Scalability
+### 20.9 Scalability
 
 The system scales to hundreds of engines without redesign. New engines can be added by creating a new engine class, registering it in `bootstrap.py`, and adding a new test file — no existing code needs to change.
 
-### 19.9 Testability
+### 20.10 Testability
 
 Every engine is independently testable. Each engine's `execute()` method takes a `GenerationContext` with pre-populated artefacts and returns a `StageResult`. Tests can construct a context with mock artefacts and verify the engine's output without running the entire pipeline.
 
-### 19.10 Arabic Language Support
+### 20.11 Arabic Language Support
 
 The system fully supports Arabic-language requests. The Intent Parser detects Arabic text and classifies bot types using Arabic keywords. The Blueprint Composer transliterates Arabic text to English slugs for package names. The system handles both Arabic and English seamlessly.
 
 ---
 
-## 20. Project Statistics
+## 21. Project Statistics
 
-### 20.1 Code Statistics
+### 21.1 Code Statistics
 
 | Metric | Value |
 |--------|-------|
-| **Total source files** | 144 Python files |
-| **Total source lines** | 32,383 lines |
-| **Total test files** | 8 test files |
-| **Total test lines** | 13,522 lines |
-| **Total files (source + test)** | 152 files |
-| **Total lines (source + test)** | 45,905 lines |
-| **Number of engines** | 11 |
+| **Total source files** | 151 Python files |
+| **Total source lines** | 36,404 lines |
+| **Total test files** | 9 test files |
+| **Total test lines** | 16,840 lines |
+| **Total files (source + test)** | 160 files |
+| **Total lines (source + test)** | 53,244 lines |
+| **Number of engines** | 12 |
 | **Number of execution phases** | 8 |
 
-### 20.2 Per-Engine Statistics
+### 21.2 Per-Engine Statistics
 
 | Engine | ID | Priority | Files | Lines | Output Artefact |
 |--------|----|----------|-------|-------|-----------------|
@@ -1559,9 +1788,10 @@ The system fully supports Arabic-language requests. The Intent Parser detects Ar
 | Visual Page Reconstruction | `visual_page_reconstruction` | 90 | 9 | 3,284 | `page_analyses`, `rebuilt_pdf_bytes`, `visual_similarity_reports` |
 | Dependency Resolver | `dependency_resolver` | 95 | 11 | 4,248 | `dependency_resolution_report` |
 | Project Context | `project_context` | 96 | 12 | 3,663 | `project_context` |
-| **Total** | | | **95** | **24,116** | |
+| Intelligence Graph | `intelligence_graph` | 97 | 7 | 4,002 | `intelligence_graph` |
+| **Total** | | | **102** | **28,118** | |
 
-### 20.3 Data Model Class Count
+### 21.3 Data Model Class Count
 
 | Engine | Data Classes |
 |--------|-------------|
@@ -1574,6 +1804,7 @@ The system fully supports Arabic-language requests. The Intent Parser detects Ar
 | Dependency Resolver | `DependencyEntry`, `DependencyRelationship`, `DependencyOrderEntry`, `ResolutionFinding`, `DependencyResolutionReport` (5) |
 | Visual Page Reconstruction | `PageAnalysis`, `PageDimensions`, `PageImage`, `PageText`, `PageChoice`, `PageTable`, `PageEquation`, `PageSeparator`, `ElementPosition`, `VisualLayer` (10) |
 | Project Context | `ProjectGoal`, `FeatureSummary`, `ComponentSummary`, `FileSummary`, `DependencySummary`, `RelationshipSummary`, `ExecutionStage`, `ContextLink`, `ExpansionPoint`, `ContextFinding`, `LinkIndices`, `SourceProvenance`, `ProjectContext` (13) |
+| Intelligence Graph | `GraphNode`, `GraphEdge`, `GraphFinding`, `GraphIndices`, `GraphProvenance`, `ProjectIntelligenceGraph` (6) |
 
 ---
 
@@ -1581,12 +1812,12 @@ The system fully supports Arabic-language requests. The Intent Parser detects Ar
 
 - **Project:** Telegram Bot Generation Engine (`ai_Agent_7h_bot`)
 - **Repository:** `https://github.com/atemmokhtar2-blip/ai_Agent_7h_bot`
-- **Total Engines:** 11
-- **Total Source Files:** 144 (32,383 lines)
-- **Total Test Files:** 8 (13,522 lines)
-- **Total Codebase:** 152 files, 45,905 lines
+- **Total Engines:** 12
+- **Total Source Files:** 151 (36,404 lines)
+- **Total Test Files:** 9 (16,840 lines)
+- **Total Codebase:** 160 files, 53,244 lines
 - **Language:** Python 3.11
-- **Architecture:** Modular pipeline with artefact-based communication
+- **Architecture:** Modular pipeline with artefact-based communication and graph-based intelligence
 
 ---
 
